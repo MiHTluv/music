@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./lov.css">
+</head>
+<body>   
+    <div class="player">   
+        <!-- Dashboard -->
+        <div class="dashboard">
+            <!-- Header -->
+            <header>
+                <h4>Now playing:</h4>
+                <h2>String 57th & 9th</h2>
+            </header>
+
+            <!-- CD -->
+            <div class="cd">
+                <div class="cd-thumb" 
+                    style="background-image: url('https://i.ytimg.com/vi/jTLhQf5KJSc/maxresdefault.jpg')">
+                </div>
+            </div>
+
+            <!-- Control -->
+            <div class="control">
+                <div class="btn btn-repeat">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <div class="btn btn-prev">
+                    <i class="fas fa-step-backward"></i>
+                </div>
+                <div class="btn btn-toggle-play">
+                    <i class="fas fa-pause icon-pause"></i>
+                    <i class="fas fa-play icon-play"></i>
+                </div>
+                <div class="btn btn-next">
+                    <i class="fas fa-step-forward"></i>
+                </div>
+                <div class="btn btn-random">
+                    <i class="fas fa-random"></i>
+                </div>
+            </div>
+
+            <input id="progress" class="progress" type="range" value="0" step="1" min="0" max="100">
+
+            <audio id="audio" src=""></audio>
+        </div>
+
+        <!-- Playlist -->
+        <div class="playlist"></div>
+    </div>
+    <script>
+        /**
+         * 1.Render songs
+         * 2.Scroll top
+         * 3.Play/ pause/ seek
+         * 4.CD rotate
+         * 5.Next/ prev
+         * 6.Random
+         * 7.Next/ Repeat when ended
+         * 8.Active song
+         * 9.Scroll active song into view
+         * 10.Play song when click
+         */
+        const $=document.querySelector.bind(document)
+        const $$=document.querySelectorAll.bind(document)
+        const PLAYER_STORAGE_KEY='MiNguMuc' 
+
+        const heading=$('header h2')
+        const cdThumb=$('.cd-thumb')
+        const audio=$('#audio')
+        const cd=$('.cd')
+        const playBtn=$('.btn-toggle-play')
+        const player=$('.player')
+        const progress=$('#progress')
+        const prevBtn=$('.btn-prev')
+        const nextBtn=$('.btn-next')
+        const randomBtn=$('.btn-random')
+        const repeatBtn=$('.btn-repeat')
+        const playList=$('.playlist')
+
+        const app={
+            currentIndex:0,
+            isPlaying:false,
+            isRandom:false,
+            isRepeat:false,
+            config:JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY))||{},
+            song:[
+                {
+                    name: "Tu Phir Se Aana",
+                    singer: "Raftaar x Salim Merchant x Karma",
+                    path:"./music1.mp3",
+                    image: "https://1.bp.blogspot.com/-kX21dGUuTdM/X85ij1SBeEI/AAAAAAAAKK4/feboCtDKkls19cZw3glZWRdJ6J8alCm-gCNcBGAsYHQ/s16000/Tu%2BAana%2BPhir%2BSe%2BRap%2BSong%2BLyrics%2BBy%2BRaftaar.jpg"
+                },
+                {
+                    name: "Tu Phir Se Aana",
+                    singer: "Raftaar x Salim Merchant x Karma",
+                    path: "https://zingmp3.vn/bai-hat/Hac-Nguyet-Quang-Truong-Nguyet-Tan-Minh-OST-HarumiYue-Truong-Bich-Than-Mao-Bat-Dich/Z69AOC8D.html",
+                    image: "https://1.bp.blogspot.com/-kX21dGUuTdM/X85ij1SBeEI/AAAAAAAAKK4/feboCtDKkls19cZw3glZWRdJ6J8alCm-gCNcBGAsYHQ/s16000/Tu%2BAana%2BPhir%2BSe%2BRap%2BSong%2BLyrics%2BBy%2BRaftaar.jpg"
+                },
+                {
+                    name: "Click Pow Get Down",
+                    singer: "Raftaar x Fortnite",
+                    path: "https://mp3.vlcmusic.com/download.php?track_id=34737&format=320",
+                    image: "https://i.ytimg.com/vi/jTLhQf5KJSc/maxresdefault.jpg"
+                },
+                {
+                    name: "Tu Phir Se Aana",
+                    singer: "Raftaar x Salim Merchant x Karma",
+                    path: "https://mp3.vlcmusic.com/download.php?track_id=34213&format=320",
+                    image: "https://1.bp.blogspot.com/-kX21dGUuTdM/X85ij1SBeEI/AAAAAAAAKK4/feboCtDKkls19cZw3glZWRdJ6J8alCm-gCNcBGAsYHQ/s16000/Tu%2BAana%2BPhir%2BSe%2BRap%2BSong%2BLyrics%2BBy%2BRaftaar.jpg"
+                },
+                {
+                    name: "Click Pow Get Down",
+                    singer: "Raftaar x Fortnite",
+                    path: "https://mp3.vlcmusic.com/download.php?track_id=34737&format=320",
+                    image: "https://i.ytimg.com/vi/jTLhQf5KJSc/maxresdefault.jpg"
+                },
+                {
+                    name: "Tu Phir Se Aana",
+                    singer: "Raftaar x Salim Merchant x Karma",
+                    path: "https://mp3.vlcmusic.com/download.php?track_id=34213&format=320",
+                    image: "https://images2.thanhnien.vn/Uploaded/nhutnq/2022_10_02/220928180903-03-dall-e-ai-2189.jpg"
+                }
+            ],  
+            setConfig: function(key,value){
+                this.config[key]=value;
+                localStorage.setItem(PLAYER_STORAGE_KEY,JSON.stringify(this.config))
+            },
+            render:function(){
+                const htmls=this.song.map((song,index)=>{
+                    return`
+                        <div class="song ${index===this.currentIndex?'active':''}" data-index="${index}">
+                            <div class="thumb" 
+                                style="background-image: url('${song.image}')">
+                            </div>
+                            <div class="body">
+                                <h3 class="title">${song.name}</h3>
+                                <p class="author">${song.singer}</p>
+                            </div>
+                            <div class="option">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                        </div>
+                    `
+                })
+                playList.innerHTML=htmls.join('')
+            },
+            defineProperties:function(){
+                Object.defineProperty(this,'currentSong',{
+                    get:function(){
+                        return this.song[this.currentIndex]
+                    }
+                })
+            },
+            handleEvent:function(){
+                const _this=this
+                const cdWidth=cd.offsetWidth
+
+                //Xu li CD quay/ dung
+                const cdThumbAnimate=cdThumb.animate([
+                    {transform:'rotate(360deg)'}
+                ],{
+                    duration:10000,//10 seconds
+                    iterations:Infinity
+                })
+                cdThumbAnimate.pause()
+                //xu li phong to/ thu nho CD
+                document.onscroll=function(){
+                    const scrollTop=window.scrollY||document.documentElement.scrollTop
+                    const newCdWidth=cdWidth-scrollTop
+
+                    cd.style.width=newCdWidth>0?newCdWidth+'px':0
+                    cd.style.opacity=newCdWidth/cdWidth
+                }  
+                //Xu li khi click play
+                playBtn.onclick=function(){
+                    if(_this.isPlaying){                 
+                        audio.pause()
+                    }else{
+                        audio.play() 
+                    }
+                }; 
+                //khi song duoc play
+                audio.onplay=function(){
+                        _this.isPlaying=true
+                        player.classList.add("playing")
+                        cdThumbAnimate.play()
+                    }
+                //khi song dung play
+                audio.onpause=function(){
+                     _this.isPlaying=false
+                    player.classList.remove("playing")
+                    cdThumbAnimate.pause()
+                }
+                //Khi tien do bai hat thay doi
+                audio.ontimeupdate=function(){
+                    if(audio.duration){
+                        const progressPercent=Math.floor(audio.currentTime/audio.duration*100)
+                        progress.value=progressPercent
+                    }
+                }
+                //Xu li khi tua xong
+                progress.onchange=function(e){
+                    const seekTime=audio.duration/100*e.target.value
+                    audio.currentTime=seekTime
+
+                }
+                //Khi chuyen sang bai tiep theo
+                nextBtn.onclick=function(){
+                    if(_this.isRandom){
+                        _this.randomSong()
+                    }else{
+                        _this.nextSong()
+                    }
+                    audio.play()
+                    _this.render()
+                    _this.scrollActivesong()
+                }
+                prevBtn.onclick=function(){
+                    if(_this.isRandom){
+                        _this.randomSong()
+                    }else{
+                        _this.prevSong()
+                    }
+                    audio.play()
+                    _this.scrollActivesong()
+                }
+                //random song
+                randomBtn.onclick=function(){
+                    _this.isRandom=!_this.isRandom
+                    _this.setConfig('isRandom',_this.isRandom)
+                    randomBtn.classList.toggle('active',_this.isRandom)
+                }
+                //Xu li repeat song
+                repeatBtn.onclick=function(){
+                    _this.isRepeat=!_this.isRepeat
+                    _this.setConfig('isRepeat',_this.isRepeat)
+                    repeatBtn.classList.toggle('active',_this.isRepeat)
+                }
+                //Xu li next song khi audio ended
+                audio.onended=function(){
+                    if(_this.isRepeat){
+                        audio.play()
+                    }else{
+                        nextBtn.click()
+                    }
+                }
+                //lang nghe hanh vi click vao playlist
+                playList.onclick=function(e){
+                    const songNode=e.target.closest('.song:not(.active)')
+                    if(songNode||e.target.closest('.option')){
+                        if(songNode){
+                            //console.log(songNode.dataset.index)
+                            _this.currentIndex=Number(songNode.dataset.index)
+                            _this.loadCurrentSong()
+                            _this.render()
+                            audio.play()
+
+                        }
+                    }
+                }
+            },
+            scrollActivesong:function(){
+                setTimeout(()=>{
+                    $('.song.active').scrollIntoView({
+                        behavior:'smooth',
+                        block:'nearest',
+                    })
+                },300)
+            },
+            loadConfig:function(){
+                this.isRandom=this.config.isRandom
+                this.isRepeat=this.config.isRepeat
+
+                //Object.assign(this,this.config)
+            },
+            loadCurrentSong:function(){
+                
+                heading.textContent=this.currentSong.name
+                cdThumb.style.backgroundImage=`url('${this.currentSong.image}')`
+                audio.src=this.currentSong.path
+
+                console.log(heading,cdThumb,audio)
+            },
+            nextSong: function(){
+                this.currentIndex++
+                if(this.currentIndex>=this.song.length){
+                    this.currentIndex=0
+                }
+                this.loadCurrentSong()
+            },
+            prevSong:function(){
+                this.currentIndex--
+                if(this.currentIndex<0){
+                    this.currentIndex=this.song.length-1
+                }
+                this.loadCurrentSong()
+            },
+            randomSong:function(){
+                let newIndex
+                do{
+                    newIndex=Math.floor(Math.random()*this.song.length)
+                }while(newIndex===this.currentIndex)
+               
+                this.currentIndex=newIndex
+                this.loadCurrentSong()
+            },
+            start:function(){
+                //Gan cau hinh tu object vao ung dung
+                this.loadConfig()
+                //Dinh nghia cac thuoc tinh cho object
+                this.defineProperties()
+                //Lang nghe/xu li cac su kien (DOM event)
+                this.handleEvent()
+                //tai thong tin bai hat dau tien vao UI khi chay ung dung
+                this.loadCurrentSong()
+                //Render playlist
+                this.render()
+                //Hien thi trang thai ban dau cua Repeat&&Button
+                randomBtn.classList.toggle('active',this.isRandom)
+                repeatBtn.classList.toggle('active',this.isRepeat)
+            }
+
+        }
+        app.start()
+        
+    </script>
+</body>
+</html>
+<!-- Design from: https://static.collectui.com/shots/3671744/musicloud-revolutionary-app-for-music-streaming-large -->
