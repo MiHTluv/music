@@ -1,1 +1,1 @@
-Link: https://mihtluv.github.io/music/
+Link: https://ntmi2k3.github.io/music/
